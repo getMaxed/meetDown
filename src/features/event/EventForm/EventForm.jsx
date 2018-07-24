@@ -1,6 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { reduxForm, Field } from 'redux-form';
+import cuid from 'cuid';
 import { Segment, Form, Button } from 'semantic-ui-react';
+import { createEvent, updateEvent } from '../eventActions';
+import TextInput from '../../../app/common/form/TextInput';
 
 const mapState = (state, ownProps) => {
     const eventId = ownProps.match.params.id;
@@ -22,6 +26,11 @@ const mapState = (state, ownProps) => {
     };
 };
 
+const actions = {
+    createEvent,
+    updateEvent
+};
+
 class EventForm extends Component {
     state = {
         event: Object.assign({}, this.props.event)
@@ -31,8 +40,15 @@ class EventForm extends Component {
         evt.preventDefault();
         if (this.state.event.id) {
             this.props.updateEvent(this.state.event);
+            this.props.history.goBack();
         } else {
-            this.props.createEvent(this.state.event);
+            const newEvent = {
+                ...this.state.event,
+                id: cuid(),
+                hostPhotoURL: '/assets/user.png'
+            };
+            this.props.createEvent(newEvent);
+            this.props.history.push('/events');
         }
     };
 
@@ -50,15 +66,12 @@ class EventForm extends Component {
         return (
             <Segment>
                 <Form onSubmit={this.onFormSubmit}>
-                    <Form.Field>
-                        <label>Event Title</label>
-                        <input
-                            name="title"
-                            onChange={this.onInputChange}
-                            value={event.title}
-                            placeholder="Event Title"
-                        />
-                    </Form.Field>
+                    <Field
+                        name="title"
+                        type="text"
+                        component={TextInput}
+                        placeholder="Give your event a name"
+                    />
                     <Form.Field>
                         <label>Event Date</label>
                         <input
@@ -99,7 +112,7 @@ class EventForm extends Component {
                     <Button positive type="submit">
                         Submit
                     </Button>
-                    <Button onClick={handleCancel} type="button">
+                    <Button onClick={this.props.history.goBack} type="button">
                         Cancel
                     </Button>
                 </Form>
@@ -108,4 +121,7 @@ class EventForm extends Component {
     }
 }
 
-export default connect(mapState)(EventForm);
+export default connect(
+    mapState,
+    actions
+)(reduxForm({ form: 'EventForm' })(EventForm));
